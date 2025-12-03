@@ -1,3 +1,12 @@
-*.txt
+# Ignore everything by default
+*
+
+# Allow directory traversal
+!*/
+
+# Keep Python sources and README
 !*.py
-.gitignore
+!README.md
+
+# Keep this file
+!.gitignore
