@@ -29,13 +29,36 @@ python3 edalogger.py \
   --kc-admin-password admin \
   --insecure
 ```
-Notes:
-- Omit `--insecure` if certificates are trusted (TLS errors are a sign you should remove it).
-- Supply `--client-secret` to avoid auto-fetching the OIDC secret (useful if the admin creds are not available).
-- `--state-file` changes where progress and ID maps are stored. Example: `--state-file /var/lib/edalogger/state.json`.
-- `--start-id`, `--summary-size`, `--max-missing` control transaction scanning. Example: `--start-id 50 --summary-size 500 --max-missing 5` to begin at tx 50, fetch in larger pages, and stop after 5 consecutive gaps.
-- Timezone: log timestamps are written in the server’s local timezone (`YYYY-MM-DDTHH:MM:SS <TZNAME>`). If you need UTC on output, run the script on a UTC host or set `TZ=UTC` in the environment when invoking the script.
-- Reruns are append-only: if you clear logs but keep the state file, only future activity is written; clear the state file to re-harvest from the start ID.
-- Keycloak filtering: GUI logins/logouts are logged, API logins are ignored, realm-role events are ignored, and password policy changes appear as `REALM-<op> ... Password policy has been modified.`
+### Advanced use
+- TLS without `--insecure`: Point `--base-url` at a host with a trusted certificate, or add your CA to the system trust store (or `REQUESTS_CA_BUNDLE`/`SSL_CERT_FILE` env). Example:
+  ```bash
+  SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt \
+  python3 edalogger.py --base-url https://eda.example.com --username alice --password '...' --kc-admin-username kcadmin --kc-admin-password '...'
+  ```
+- Supplying a client secret: If you don’t want to auto-fetch via Keycloak admin, provide it explicitly:
+  ```bash
+  python3 edalogger.py --base-url https://eda.example.com --username alice --password '...' \
+    --kc-admin-username kcadmin --kc-admin-password '...' \
+    --client-secret 'your-client-secret'
+  ```
+- State file location/name: Default is `transaction_state.json` in the working dir. Override it to isolate runs:
+  ```bash
+  python3 edalogger.py ... --state-file /var/lib/edalogger/state-prod.json
+  ```
+- Scan controls:
+  - `--start-id`: where to begin if no state exists. Example: `--start-id 100` to start at tx 100.
+  - `--summary-size`: page size when fetching summaries. Example: `--summary-size 500` for larger batches.
+  - `--max-missing`: stop after N consecutive missing IDs. Example: `--max-missing 5` to bail after 5 gaps.
+- Timezone: Logs use the server’s local time (`YYYY-MM-DDTHH:MM:SS <TZNAME>`). To force UTC output, run on a UTC host or set `TZ=UTC` when invoking: `TZ=UTC python3 edalogger.py ...`.
+- Reruns: The state file controls what’s considered “new.” Clear the state to re-harvest from `--start-id`; otherwise only newer transactions/events are appended.
+- Keycloak filtering: GUI logins/logouts are logged; API logins and realm-role events are ignored; realm updates are logged as password policy changes.
+
+### Troubleshooting
+- TLS/SSL errors: Remove `--insecure` only if your CA is trusted. Otherwise, install the CA or set `SSL_CERT_FILE`/`REQUESTS_CA_BUNDLE` to the CA bundle.
+- 401/403 from API: Verify `--username/--password`, client secret (if supplied), and that the user has access to the EDA API and Keycloak admin endpoints.
+- 400 on transaction fetch: Missing transaction IDs are skipped; adjust `--start-id`/`--max-missing` if you expect gaps.
+- No new logs on rerun: Check the state file; delete it to reprocess from the start ID, or bump `--start-id` to skip older IDs.
+- GUI logins not appearing: Ensure Keycloak events are enabled and `clientId=auth` is used for GUI; API (`clientId=eda`) logins are intentionally ignored.
+- User/group names missing: Requires Keycloak admin access; ensure admin creds are correct so lookups and caches can resolve IDs.
 
 After a run, check `Transaction-YYYY-MM.log` for that month. Re-run anytime; only new transactions/events since the last state are appended.
