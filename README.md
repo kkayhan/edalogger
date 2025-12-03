@@ -1,6 +1,6 @@
 ## EDA + Keycloak Event Harvester
 
-`log-transaction.py` pulls EDA transaction deltas and Keycloak user/admin events, normalizes them, and appends everything into monthly logs named `Transaction-YYYY-MM.log` (local server timezone, `YYYY-MM-DDTHH:MM:SS <TZNAME>`). A single state file (`transaction_state.json` by default) tracks the last processed transaction, last commit time, last Keycloak event, and cached user/group ID mappings so reruns only capture new activity.
+`edalogger.py` pulls EDA transaction deltas and Keycloak user/admin events, normalizes them, and appends everything into monthly logs named `Transaction-YYYY-MM.log` (local server timezone, `YYYY-MM-DDTHH:MM:SS <TZNAME>`). A single state file (`transaction_state.json` by default) tracks the last processed transaction, last commit time, last Keycloak event, and cached user/group ID mappings so reruns only capture new activity.
 
 ### What gets logged
 - EDA transactions: config diffs per resource/node, plus status lines for dry runs or failed transactions.
@@ -21,7 +21,7 @@
 ### Usage
 Run with your endpoints and credentials. Example:
 ```bash
-python3 log-transaction.py \
+python3 edalogger.py \
   --base-url https://100.124.177.211 \
   --username admin \
   --password admin \

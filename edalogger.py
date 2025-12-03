@@ -2,7 +2,7 @@
 """
 USAGE: 
 
-python3 log-transaction.py \
+python3 edalogger.py \
   --base-url https://100.124.177.211 \
   --username "admin" \
   --password "admin" \
@@ -81,7 +81,7 @@ class Config:
     summary_size: int = 200
     start_id: int = 1
     max_missing: int = 20
-    state_file: str = "transaction_state.json"
+    state_file: str = "state_edalogger.json"
 
 
 def _ssl_ctx(insecure: bool) -> ssl.SSLContext:
@@ -1286,7 +1286,7 @@ def main():
                    help="Transaction ID to start from if no state is present (default 1)")
     p.add_argument("--max-missing", type=int, default=20,
                    help="Stop after this many consecutive missing IDs (default 20)")
-    p.add_argument("--state-file", default="transaction_state.json",
+    p.add_argument("--state-file", default="state_edalogger.json",
                    help="Path to file storing the last processed transaction metadata")
 
     # TLS/HTTP
