@@ -30,9 +30,12 @@ python3 edalogger.py \
   --insecure
 ```
 Notes:
-- Omit `--insecure` if certificates are trusted.
-- Supply `--client-secret` to avoid auto-fetching the OIDC secret.
-- `--state-file` changes where progress and ID maps are stored.
-- `--start-id`, `--summary-size`, `--max-missing` control transaction scanning.
+- Omit `--insecure` if certificates are trusted (TLS errors are a sign you should remove it).
+- Supply `--client-secret` to avoid auto-fetching the OIDC secret (useful if the admin creds are not available).
+- `--state-file` changes where progress and ID maps are stored. Example: `--state-file /var/lib/edalogger/state.json`.
+- `--start-id`, `--summary-size`, `--max-missing` control transaction scanning. Example: `--start-id 50 --summary-size 500 --max-missing 5` to begin at tx 50, fetch in larger pages, and stop after 5 consecutive gaps.
+- Timezone: log timestamps are written in the server’s local timezone (`YYYY-MM-DDTHH:MM:SS <TZNAME>`). If you need UTC on output, run the script on a UTC host or set `TZ=UTC` in the environment when invoking the script.
+- Reruns are append-only: if you clear logs but keep the state file, only future activity is written; clear the state file to re-harvest from the start ID.
+- Keycloak filtering: GUI logins/logouts are logged, API logins are ignored, realm-role events are ignored, and password policy changes appear as `REALM-<op> ... Password policy has been modified.`
 
 After a run, check `Transaction-YYYY-MM.log` for that month. Re-run anytime; only new transactions/events since the last state are appended.
